@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-18 14:43:02
+@LastEditTime   : 2020-05-18 15:34:54
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -193,10 +193,32 @@ class Game(object):
 
                 # 键盘事件
                 elif event.type == gloc.KEYDOWN:
-                    ...
+                    if event.key == gloc.K_p:
+                        self.pause_button = self.images["green_pushed"]
+                    elif event.key == gloc.K_s:
+                        self.sound_button = self.images["green_pushed"]
+                    elif event.key == gloc.K_r:
+                        self.reset_button = self.images["red_pushed"]
+                    elif event.key == gloc.K_SPACE:
+                        self.space_button = self.images["blue_lg_pushed"]
+                    elif event.key == gloc.K_LEFT:
+                        self.left_button = self.images["blue_sm_pushed"]
+                    elif event.key == gloc.K_UP:
+                        self.up_button = self.images["blue_sm_pushed"]
+                    elif event.key == gloc.K_RIGHT:
+                        self.right_button = self.images["blue_sm_pushed"]
+                    elif event.key == gloc.K_DOWN:
+                        self.down_button = self.images["blue_sm_pushed"]
 
                 elif event.type == gloc.KEYUP:
-                    ...
+                    self.pause_button = self.images["green"]
+                    self.sound_button = self.images["green"]
+                    self.reset_button = self.images["red"]
+                    self.space_button = self.images["blue_lg"]
+                    self.left_button = self.images["blue_sm"]
+                    self.right_button = self.images["blue_sm"]
+                    self.up_button = self.images["blue_sm"]
+                    self.down_button = self.images["blue_sm"]
 
                 # 鼠标点击
                 elif event.type == gloc.MOUSEBUTTONDOWN:
