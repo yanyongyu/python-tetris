@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-18 15:34:54
+@LastEditTime   : 2020-05-18 18:17:07
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -18,6 +18,7 @@ import pygame
 import pygame.locals as gloc
 
 from .typing import Scene
+from .store import Database
 
 
 class Game(object):
@@ -43,6 +44,12 @@ class Game(object):
         
         delay (int): Delay
         score (int): Game score
+        best_score (int): Best score
+        last_score (int): Last score
+        sound (bool): Sound on or off
+        start_line (int): Start line number
+        level (int): Level number
+        pause (bool): Pause game
         left_button (pygame.Surface): Left button image
         right_button (pygame.Surface): Right button image
         up_button (pygame.Surface): Up button image
@@ -71,7 +78,11 @@ class Game(object):
             "left": self.font.render("Left", True, (0, 0, 0)),
             "up": self.font.render("Rotation", True, (0, 0, 0)),
             "right": self.font.render("Right", True, (0, 0, 0)),
-            "down": self.font.render("Down", True, (0, 0, 0))
+            "down": self.font.render("Down", True, (0, 0, 0)),
+            "left_arrow": self.font.render("◀", True, (0, 0, 0)),
+            "up_arrow": self.font.render("▲", True, (0, 0, 0)),
+            "right_arrow": self.font.render("▶", True, (0, 0, 0)),
+            "down_arrow": self.font.render("▼", True, (0, 0, 0))
         }
 
         # Load images
@@ -84,7 +95,7 @@ class Game(object):
             "left": pygame.Rect(314, 700, 96, 96),
             "up": pygame.Rect(404, 610, 96, 96),
             "right": pygame.Rect(494, 700, 96, 96),
-            "down": pygame.Rect(404, 790, 96, 96),
+            "down": pygame.Rect(404, 790, 96, 96)
         }
 
         # Init Scene flags
@@ -128,6 +139,15 @@ class Game(object):
             os.path.join(os.path.dirname(__file__),
                          "assets/image/blue_lg_pushed.png")).convert_alpha()
 
+        # icons
+        icons = pygame.image.load(
+            os.path.join(os.path.dirname(__file__),
+                         "assets/image/icon.png")).convert()
+        sound = icons.subsurface((175, 75, 25, 21))
+        unsound = icons.subsurface((150, 75, 25, 21))
+        unpause = icons.subsurface((100, 75, 20, 18))
+        pause = icons.subsurface((75, 75, 20, 18))
+
         self.images = {
             "background": background,
             "red": red,
@@ -137,13 +157,22 @@ class Game(object):
             "blue_sm": blue_sm,
             "blue_sm_pushed": blue_sm_pushed,
             "blue_lg": blue_lg,
-            "blue_lg_pushed": blue_lg_pushed
+            "blue_lg_pushed": blue_lg_pushed,
+            "sound": sound,
+            "unsound": unsound,
+            "pause": pause,
+            "unpause": unpause
         }
 
     def init_vars(self):
         """Initialize the variables."""
         self.delay = 0
         self.score = 0
+        data = Database.restore_data()
+        self.best_score, self.last_score = data[0], data[1]
+        self.sound = bool(data[2])
+        self.start_line, self.level = data[3], data[4]
+        self.pause = False
 
         # 按钮
         self.pause_button = self.images["green"]
@@ -254,6 +283,8 @@ class Game(object):
 
             # 基础背景绘制
             self.screen.blit(self.images["background"], (0, 0))
+            self.screen.fill((158, 173, 134), (126, 90, 360, 445))
+            pygame.draw.rect(self.screen, (0, 0, 0), (132, 96, 220, 434), 2)
 
             # 绘制按钮
             self.screen.blit(self.pause_button, self.rects["pause"])
@@ -272,6 +303,16 @@ class Game(object):
             self.screen.blit(self.words["up"], (504, 630))
             self.screen.blit(self.words["right"], (520, 800))
             self.screen.blit(self.words["down"], (429, 886))
+
+            # 绘制图标
+            if self.sound:
+                self.screen.blit(self.images["sound"], (360, 499))
+            else:
+                self.screen.blit(self.images["unsound"], (360, 499))
+            if self.pause:
+                self.screen.blit(self.images["pause"], (389, 500))
+            else:
+                self.screen.blit(self.images["unpause"], (389, 500))
 
             # 首页
             if self.home:
