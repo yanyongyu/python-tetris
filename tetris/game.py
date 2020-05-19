@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-18 18:17:07
+@LastEditTime   : 2020-05-19 21:28:41
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -13,6 +13,7 @@ __author__ = "yanyongyu"
 import os
 import sys
 import logging
+from datetime import datetime
 
 import pygame
 import pygame.locals as gloc
@@ -54,6 +55,12 @@ class Game(object):
         right_button (pygame.Surface): Right button image
         up_button (pygame.Surface): Up button image
         down_button (pygame.Surface): Down button image
+        time (bool): Show time colon or not
+        logo (List[int]): List of logo animation
+        logo_flip (bool): Whether to flip logo or not
+        logo_index (int): Index of logo animation
+        best_or_last (bool): Whether to show best or last
+        best_or_last_index (int): Timer of best or last
     """
 
     def __init__(self):
@@ -64,6 +71,14 @@ class Game(object):
         self.screen = pygame.display.set_mode(self.screen_size)
         pygame.display.set_caption("Tetris")
 
+        # Init mixer and load music
+        pygame.mixer.init()
+        pygame.mixer.set_num_channels(4)
+        pygame.mixer.music.load(
+            os.path.join(os.path.dirname(__file__), "assets/music/bgm.ogg"))
+        pygame.mixer.music.set_volume(0.4)
+        pygame.mixer.music.play(-1)
+
         # Init clock
         self.clock = pygame.time.Clock()
 
@@ -71,6 +86,7 @@ class Game(object):
         self.font = pygame.font.Font(
             os.path.join(os.path.dirname(__file__), "assets/font/msyh.ttf"), 16)
         self.words = {
+            "tetris": self.font.render("T E T R I S", True, (0, 0, 0)),
             "pause": self.font.render("Pause(P)", True, (0, 0, 0)),
             "sound": self.font.render("Sound(S)", True, (0, 0, 0)),
             "reset": self.font.render("Reset(R)", True, (0, 0, 0)),
@@ -79,10 +95,16 @@ class Game(object):
             "up": self.font.render("Rotation", True, (0, 0, 0)),
             "right": self.font.render("Right", True, (0, 0, 0)),
             "down": self.font.render("Down", True, (0, 0, 0)),
-            "left_arrow": self.font.render("◀", True, (0, 0, 0)),
-            "up_arrow": self.font.render("▲", True, (0, 0, 0)),
-            "right_arrow": self.font.render("▶", True, (0, 0, 0)),
-            "down_arrow": self.font.render("▼", True, (0, 0, 0))
+            "left_arrow": self.font.render("←", True, (0, 0, 0)),
+            "up_arrow": self.font.render("↑", True, (0, 0, 0)),
+            "right_arrow": self.font.render("→", True, (0, 0, 0)),
+            "down_arrow": self.font.render("↓", True, (0, 0, 0)),
+            "start": self.font.render("Press SPACE to start", True, (0, 0, 0)),
+            "best": self.font.render("Best", True, (0, 0, 0)),
+            "last": self.font.render("Last Round", True, (0, 0, 0)),
+            "start_line": self.font.render("Start Line", True, (0, 0, 0)),
+            "level": self.font.render("Level", True, (0, 0, 0)),
+            "next": self.font.render("Next", True, (0, 0, 0))
         }
 
         # Load images
@@ -139,14 +161,40 @@ class Game(object):
             os.path.join(os.path.dirname(__file__),
                          "assets/image/blue_lg_pushed.png")).convert_alpha()
 
+        # logo
+        logo = pygame.image.load(
+            os.path.join(os.path.dirname(__file__),
+                         "assets/image/logo.png")).convert_alpha()
+        logos = [
+            logo.subsurface((0, 0, 80, 86)),
+            logo.subsurface((100, 0, 80, 86)),
+            logo.subsurface((200, 0, 80, 86)),
+            logo.subsurface((300, 0, 80, 86))
+        ]
+
         # icons
         icons = pygame.image.load(
             os.path.join(os.path.dirname(__file__),
                          "assets/image/icon.png")).convert()
         sound = icons.subsurface((175, 75, 25, 21))
         unsound = icons.subsurface((150, 75, 25, 21))
-        unpause = icons.subsurface((100, 75, 20, 18))
         pause = icons.subsurface((75, 75, 20, 18))
+        unpause = icons.subsurface((100, 75, 20, 18))
+        numbers = [
+            icons.subsurface((75, 25, 14, 24)),
+            icons.subsurface((89, 25, 14, 24)),
+            icons.subsurface((103, 25, 14, 24)),
+            icons.subsurface((117, 25, 14, 24)),
+            icons.subsurface((131, 25, 14, 24)),
+            icons.subsurface((145, 25, 14, 24)),
+            icons.subsurface((159, 25, 14, 24)),
+            icons.subsurface((173, 25, 14, 24)),
+            icons.subsurface((187, 25, 14, 24)),
+            icons.subsurface((201, 25, 14, 24))
+        ]
+        number_none = icons.subsurface((215, 25, 14, 24))
+        colon = icons.subsurface((229, 25, 14, 24))
+        colon_none = icons.subsurface((243, 25, 14, 24))
 
         self.images = {
             "background": background,
@@ -158,10 +206,15 @@ class Game(object):
             "blue_sm_pushed": blue_sm_pushed,
             "blue_lg": blue_lg,
             "blue_lg_pushed": blue_lg_pushed,
+            "logos": logos,
             "sound": sound,
             "unsound": unsound,
             "pause": pause,
-            "unpause": unpause
+            "unpause": unpause,
+            "numbers": numbers,
+            "number_none": number_none,
+            "colon": colon,
+            "colon_none": colon_none
         }
 
     def init_vars(self):
@@ -183,6 +236,22 @@ class Game(object):
         self.right_button = self.images["blue_sm"]
         self.up_button = self.images["blue_sm"]
         self.down_button = self.images["blue_sm"]
+
+        # 时钟
+        self.time = True
+
+        # Logo
+        self.logo = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
+            2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3
+        ]
+        self.logo_flip = False
+        self.logo_index = 0
+
+        # 分数
+        self.best_or_last = True
+        self.best_or_last_index = 0
 
     def switch_scene(self, scene: Scene):
         """Switch current scene
@@ -209,6 +278,10 @@ class Game(object):
             self.end = True
         else:
             logging.warning(f"Unknow Scene {scene!s}")
+
+    def switch_sound(self):
+        self.sound = not self.sound
+        pygame.mixer.music.set_volume(0.5 if self.sound else 0)
 
     def start(self):
         """Main game loop."""
@@ -240,6 +313,22 @@ class Game(object):
                         self.down_button = self.images["blue_sm_pushed"]
 
                 elif event.type == gloc.KEYUP:
+                    if event.key == gloc.K_p and self.game:
+                        self.pause = not self.pause
+                    elif event.key == gloc.K_s:
+                        self.switch_sound()
+                    elif event.key == gloc.K_r:
+                        ...
+                    elif event.key == gloc.K_SPACE:
+                        ...
+                    elif event.key == gloc.K_LEFT:
+                        ...
+                    elif event.key == gloc.K_UP:
+                        ...
+                    elif event.key == gloc.K_RIGHT:
+                        ...
+                    elif event.key == gloc.K_DOWN:
+                        ...
                     self.pause_button = self.images["green"]
                     self.sound_button = self.images["green"]
                     self.reset_button = self.images["red"]
@@ -272,6 +361,24 @@ class Game(object):
 
                 # 鼠标点击释放
                 elif event.type == gloc.MOUSEBUTTONUP:
+                    pos = event.pos
+                    if event.button == 1:
+                        if self.rects["pause"].collidepoint(pos) and self.game:
+                            self.pause = not self.pause
+                        elif self.rects["sound"].collidepoint(pos):
+                            self.switch_sound()
+                        elif self.rects["reset"].collidepoint(pos):
+                            ...
+                        elif self.rects["space"].collidepoint(pos):
+                            ...
+                        elif self.rects["left"].collidepoint(pos):
+                            ...
+                        elif self.rects["up"].collidepoint(pos):
+                            ...
+                        elif self.rects["right"].collidepoint(pos):
+                            ...
+                        elif self.rects["down"].collidepoint(pos):
+                            ...
                     self.pause_button = self.images["green"]
                     self.sound_button = self.images["green"]
                     self.reset_button = self.images["red"]
@@ -303,6 +410,10 @@ class Game(object):
             self.screen.blit(self.words["up"], (504, 630))
             self.screen.blit(self.words["right"], (520, 800))
             self.screen.blit(self.words["down"], (429, 886))
+            self.screen.blit(self.words["left_arrow"], (420, 740))
+            self.screen.blit(self.words["up_arrow"], (450, 715))
+            self.screen.blit(self.words["right_arrow"], (470, 740))
+            self.screen.blit(self.words["down_arrow"], (450, 765))
 
             # 绘制图标
             if self.sound:
@@ -314,9 +425,82 @@ class Game(object):
             else:
                 self.screen.blit(self.images["unpause"], (389, 500))
 
+            now = datetime.now()
+            self.screen.blit(
+                self.images["colon"]
+                if self.time else self.images["colon_none"], (437, 497))
+            self.screen.blit(
+                self.images["numbers"][now.hour // 10] if now.hour //
+                10 else self.images["number_none"], (412, 497))
+            self.screen.blit(self.images["numbers"][now.hour % 10], (426, 497))
+            self.screen.blit(self.images["numbers"][now.minute // 10],
+                             (451, 497))
+            self.screen.blit(self.images["numbers"][now.minute % 10],
+                             (465, 497))
+
+            if self.delay == 0:
+                self.time = not self.time
+
             # 首页
             if self.home:
-                ...
+                # 绘制logo
+                if self.logo_flip:
+                    self.screen.blit(
+                        pygame.transform.flip(
+                            self.images["logos"][self.logo[self.logo_index]],
+                            True, False), (200, 230))
+                else:
+                    self.screen.blit(
+                        self.images["logos"][self.logo[self.logo_index]],
+                        (200, 230))
+                if self.delay % 5 == 0:
+                    self.logo_index = (self.logo_index + 1) % len(self.logo)
+                if self.logo_index < 6 and self.delay == 0:
+                    self.logo_flip = not self.logo_flip
+
+                self.screen.blit(self.words["tetris"], (205, 330))
+                if self.time:
+                    self.screen.blit(self.words["start"], (165, 370))
+
+                # 绘制分数
+                if self.best_or_last:
+                    self.screen.blit(self.words["best"], (370, 110))
+                    scores = list(f"{self.best_score: >6}")
+                    scores.reverse()
+                    for index, score in enumerate(scores):
+                        self.screen.blit(
+                            self.images["numbers"][int(score)]
+                            if score != " " else self.images["number_none"],
+                            (460 - index * 14, 140))
+                else:
+                    self.screen.blit(self.words["last"], (370, 110))
+                    scores = list(f"{self.last_score: >6}")
+                    scores.reverse()
+                    for index, score in enumerate(scores):
+                        self.screen.blit(
+                            self.images["numbers"][int(score)]
+                            if score != " " else self.images["number_none"],
+                            (460 - index * 14, 140))
+                if self.delay == 0:
+                    self.best_or_last_index = (self.best_or_last_index + 1) % 5
+                if self.best_or_last_index == 0 and self.delay == 0:
+                    self.best_or_last = not self.best_or_last
+
+                # 绘制初始行数
+                self.screen.blit(self.words["start_line"], (370, 185))
+                start_line = list(f"{self.start_line: >6}")
+                start_line.reverse()
+                for index, line in enumerate(start_line):
+                    self.screen.blit(
+                        self.images["numbers"][int(line)] if line != " " else
+                        self.images["number_none"], (460 - index * 14, 215))
+
+                # 绘制level
+                self.screen.blit(self.words["level"], (370, 260))
+                self.screen.blit(self.images["numbers"][self.level], (460, 290))
+                for index in range(5):
+                    self.screen.blit(self.images["number_none"],
+                                     (446 - index * 14, 290))
             # 游戏界面
             elif self.game:
                 ...

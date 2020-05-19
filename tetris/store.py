@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-18 16:22:25
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-18 18:14:06
+@LastEditTime   : 2020-05-19 21:26:23
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -32,7 +32,7 @@ class Database:
                        "last INTEGER DEFAULT 0,"
                        "sound INTEGER DEFAULT 1,"
                        "start_line INTEGER DEFAULT 0,"
-                       "level INTEGER DEFAULT 0"
+                       "level INTEGER DEFAULT 1"
                        ")")
         cursor.close()
         conn.commit()
