@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-18 16:22:25
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-19 21:26:23
+@LastEditTime   : 2020-05-19 22:26:11
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -49,3 +49,10 @@ class Database:
         cursor.close()
         conn.close()
         return result
+
+    @classmethod
+    def update_data(cls, **kwargs):
+        conn = cls.connect()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tetris SET " + ", ".join(
+            f"{key}={value}" for key, value in kwargs.items()) + " WHERE id=0")

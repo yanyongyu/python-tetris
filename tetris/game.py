@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-19 21:28:41
+@LastEditTime   : 2020-05-19 23:15:33
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -391,7 +391,7 @@ class Game(object):
             # 基础背景绘制
             self.screen.blit(self.images["background"], (0, 0))
             self.screen.fill((158, 173, 134), (126, 90, 360, 445))
-            pygame.draw.rect(self.screen, (0, 0, 0), (132, 96, 220, 434), 2)
+            pygame.draw.rect(self.screen, (0, 0, 0), (132, 96, 224, 434), 2)
 
             # 绘制按钮
             self.screen.blit(self.pause_button, self.rects["pause"])
