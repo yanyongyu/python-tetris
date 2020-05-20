@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-19 23:15:33
+@LastEditTime   : 2020-05-20 14:56:15
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -19,6 +19,7 @@ import pygame
 import pygame.locals as gloc
 
 from .typing import Scene
+from .matrix import Matrix
 from .store import Database
 
 
@@ -42,6 +43,9 @@ class Game(object):
         rects (Dict[str, pygame.Rect]): Rect objects
         words (Dict[str, pygame.Surface]): Static words
         images (Dict[str, pygame.Surface]): Static images
+        sounds (Dict[str, pygame.mixer.Sound]): Static sounds
+        
+        metrix (Matrix): Matrix Sprite
         
         delay (int): Delay
         score (int): Game score
@@ -51,10 +55,10 @@ class Game(object):
         start_line (int): Start line number
         level (int): Level number
         pause (bool): Pause game
-        left_button (pygame.Surface): Left button image
-        right_button (pygame.Surface): Right button image
-        up_button (pygame.Surface): Up button image
-        down_button (pygame.Surface): Down button image
+        left_button (bool): Whether left button is pressed or not
+        right_button (bool): Whether right button is pressed or not
+        up_button (bool): Whether up button is pressed or not
+        down_button (bool): Whether down button is pressed or not
         time (bool): Show time colon or not
         logo (List[int]): List of logo animation
         logo_flip (bool): Whether to flip logo or not
@@ -76,15 +80,44 @@ class Game(object):
         pygame.mixer.set_num_channels(4)
         pygame.mixer.music.load(
             os.path.join(os.path.dirname(__file__), "assets/music/bgm.ogg"))
-        pygame.mixer.music.set_volume(0.4)
+        pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.play(-1)
+        self.sounds = {
+            "start":
+                pygame.mixer.Sound(
+                    os.path.join(os.path.dirname(__file__),
+                                 "assets/music/start.ogg")),
+            "biu1":
+                pygame.mixer.Sound(
+                    os.path.join(os.path.dirname(__file__),
+                                 "assets/music/biu1.ogg")),
+            "biu2":
+                pygame.mixer.Sound(
+                    os.path.join(os.path.dirname(__file__),
+                                 "assets/music/biu2.ogg")),
+            "drop":
+                pygame.mixer.Sound(
+                    os.path.join(os.path.dirname(__file__),
+                                 "assets/music/drop.ogg")),
+            "clear":
+                pygame.mixer.Sound(
+                    os.path.join(os.path.dirname(__file__),
+                                 "assets/music/clear.ogg")),
+            "end":
+                pygame.mixer.Sound(
+                    os.path.join(os.path.dirname(__file__),
+                                 "assets/music/end.ogg"))
+        }
+        for each in self.sounds.values():
+            each.set_volume(0.5)
 
         # Init clock
         self.clock = pygame.time.Clock()
 
         # Init font
         self.font = pygame.font.Font(
-            os.path.join(os.path.dirname(__file__), "assets/font/msyh.ttf"), 16)
+            os.path.join(os.path.dirname(__file__),
+                         "assets/font/HYXiaoBoHuaYueYuanW.ttf"), 16)
         self.words = {
             "tetris": self.font.render("T E T R I S", True, (0, 0, 0)),
             "pause": self.font.render("Pause(P)", True, (0, 0, 0)),
@@ -125,6 +158,9 @@ class Game(object):
         self.refresh = False
         self.game = False
         self.end = False
+
+        # Init Matrix
+        self.matrix = Matrix()
 
         self.init_vars()
 
@@ -228,14 +264,14 @@ class Game(object):
         self.pause = False
 
         # 按钮
-        self.pause_button = self.images["green"]
-        self.sound_button = self.images["green"]
-        self.reset_button = self.images["red"]
-        self.space_button = self.images["blue_lg"]
-        self.left_button = self.images["blue_sm"]
-        self.right_button = self.images["blue_sm"]
-        self.up_button = self.images["blue_sm"]
-        self.down_button = self.images["blue_sm"]
+        self.pause_button = False
+        self.sound_button = False
+        self.reset_button = False
+        self.space_button = False
+        self.left_button = False
+        self.right_button = False
+        self.up_button = False
+        self.down_button = False
 
         # 时钟
         self.time = True
@@ -261,6 +297,7 @@ class Game(object):
         """
         if scene == Scene.HOME:
             self.home = True
+            self.refresh = False
             self.game = False
             self.end = False
         elif scene == Scene.REFRESH:
@@ -270,10 +307,12 @@ class Game(object):
             self.end = False
         elif scene == Scene.GAME:
             self.home = False
+            self.refresh = False
             self.game = True
             self.end = False
         elif scene == Scene.END:
             self.home = False
+            self.refresh = False
             self.game = False
             self.end = True
         else:
@@ -296,124 +335,151 @@ class Game(object):
                 # 键盘事件
                 elif event.type == gloc.KEYDOWN:
                     if event.key == gloc.K_p:
-                        self.pause_button = self.images["green_pushed"]
+                        self.pause_button = True
                     elif event.key == gloc.K_s:
-                        self.sound_button = self.images["green_pushed"]
+                        self.sound_button = True
                     elif event.key == gloc.K_r:
-                        self.reset_button = self.images["red_pushed"]
+                        self.reset_button = True
                     elif event.key == gloc.K_SPACE:
-                        self.space_button = self.images["blue_lg_pushed"]
+                        self.space_button = True
                     elif event.key == gloc.K_LEFT:
-                        self.left_button = self.images["blue_sm_pushed"]
+                        self.left_button = True
                     elif event.key == gloc.K_UP:
-                        self.up_button = self.images["blue_sm_pushed"]
+                        self.up_button = True
                     elif event.key == gloc.K_RIGHT:
-                        self.right_button = self.images["blue_sm_pushed"]
+                        self.right_button = True
                     elif event.key == gloc.K_DOWN:
-                        self.down_button = self.images["blue_sm_pushed"]
+                        self.down_button = True
 
                 elif event.type == gloc.KEYUP:
-                    if event.key == gloc.K_p and self.game:
-                        self.pause = not self.pause
+                    if event.key == gloc.K_p:
+                        self.pause_button = False
+                        if self.game:
+                            self.pause = not self.pause
                     elif event.key == gloc.K_s:
+                        self.sound_button = False
                         self.switch_sound()
                     elif event.key == gloc.K_r:
-                        ...
+                        self.reset_button = False
+                        self.switch_scene(Scene.REFRESH)
                     elif event.key == gloc.K_SPACE:
-                        ...
+                        self.space_button = False
+                        if self.home:
+                            self.sounds["start"].play()
+                            self.switch_scene(Scene.GAME)
                     elif event.key == gloc.K_LEFT:
-                        ...
+                        self.left_button = False
                     elif event.key == gloc.K_UP:
-                        ...
+                        self.up_button = False
                     elif event.key == gloc.K_RIGHT:
-                        ...
+                        self.right_button = False
                     elif event.key == gloc.K_DOWN:
-                        ...
-                    self.pause_button = self.images["green"]
-                    self.sound_button = self.images["green"]
-                    self.reset_button = self.images["red"]
-                    self.space_button = self.images["blue_lg"]
-                    self.left_button = self.images["blue_sm"]
-                    self.right_button = self.images["blue_sm"]
-                    self.up_button = self.images["blue_sm"]
-                    self.down_button = self.images["blue_sm"]
+                        self.down_button = False
 
                 # 鼠标点击
                 elif event.type == gloc.MOUSEBUTTONDOWN:
                     pos = event.pos
                     if event.button == 1:
                         if self.rects["pause"].collidepoint(pos):
-                            self.pause_button = self.images["green_pushed"]
+                            self.pause_button = True
                         elif self.rects["sound"].collidepoint(pos):
-                            self.sound_button = self.images["green_pushed"]
+                            self.sound_button = True
                         elif self.rects["reset"].collidepoint(pos):
-                            self.reset_button = self.images["red_pushed"]
+                            self.reset_button = True
                         elif self.rects["space"].collidepoint(pos):
-                            self.space_button = self.images["blue_lg_pushed"]
+                            self.space_button = True
                         elif self.rects["left"].collidepoint(pos):
-                            self.left_button = self.images["blue_sm_pushed"]
+                            self.left_button = True
                         elif self.rects["up"].collidepoint(pos):
-                            self.up_button = self.images["blue_sm_pushed"]
+                            self.up_button = True
                         elif self.rects["right"].collidepoint(pos):
-                            self.right_button = self.images["blue_sm_pushed"]
+                            self.right_button = True
                         elif self.rects["down"].collidepoint(pos):
-                            self.down_button = self.images["blue_sm_pushed"]
+                            self.down_button = True
 
                 # 鼠标点击释放
                 elif event.type == gloc.MOUSEBUTTONUP:
                     pos = event.pos
                     if event.button == 1:
-                        if self.rects["pause"].collidepoint(pos) and self.game:
-                            self.pause = not self.pause
-                        elif self.rects["sound"].collidepoint(pos):
+                        if self.pause_button and self.rects[
+                                "pause"].collidepoint(pos):
+                            if self.game:
+                                self.pause = not self.pause
+                        elif self.sound_button and self.rects[
+                                "sound"].collidepoint(pos):
                             self.switch_sound()
-                        elif self.rects["reset"].collidepoint(pos):
+                        elif self.reset_button and self.rects[
+                                "reset"].collidepoint(pos):
+                            self.switch_scene(Scene.REFRESH)
+                        elif self.space_button and self.rects[
+                                "space"].collidepoint(pos):
+                            if self.home:
+                                self.sounds["start"].play()
+                                self.switch_scene(Scene.GAME)
+                        elif self.left_button and self.rects[
+                                "left"].collidepoint(pos):
                             ...
-                        elif self.rects["space"].collidepoint(pos):
+                        elif self.up_button and self.rects["up"].collidepoint(
+                                pos):
                             ...
-                        elif self.rects["left"].collidepoint(pos):
+                        elif self.right_button and self.rects[
+                                "right"].collidepoint(pos):
                             ...
-                        elif self.rects["up"].collidepoint(pos):
+                        elif self.down_button and self.rects[
+                                "down"].collidepoint(pos):
                             ...
-                        elif self.rects["right"].collidepoint(pos):
-                            ...
-                        elif self.rects["down"].collidepoint(pos):
-                            ...
-                    self.pause_button = self.images["green"]
-                    self.sound_button = self.images["green"]
-                    self.reset_button = self.images["red"]
-                    self.space_button = self.images["blue_lg"]
-                    self.left_button = self.images["blue_sm"]
-                    self.right_button = self.images["blue_sm"]
-                    self.up_button = self.images["blue_sm"]
-                    self.down_button = self.images["blue_sm"]
+                        self.pause_button = False
+                        self.sound_button = False
+                        self.reset_button = False
+                        self.space_button = False
+                        self.left_button = False
+                        self.right_button = False
+                        self.up_button = False
+                        self.down_button = False
 
             # 基础背景绘制
             self.screen.blit(self.images["background"], (0, 0))
             self.screen.fill((158, 173, 134), (126, 90, 360, 445))
-            pygame.draw.rect(self.screen, (0, 0, 0), (132, 96, 224, 434), 2)
+            pygame.draw.rect(self.screen, (0, 0, 0), (140, 104, 210, 410), 2)
+            self.screen.blit(self.matrix.image, (146, 110))
 
             # 绘制按钮
-            self.screen.blit(self.pause_button, self.rects["pause"])
-            self.screen.blit(self.sound_button, self.rects["sound"])
-            self.screen.blit(self.reset_button, self.rects["reset"])
-            self.screen.blit(self.space_button, self.rects["space"])
-            self.screen.blit(self.left_button, self.rects["left"])
-            self.screen.blit(self.up_button, self.rects["up"])
-            self.screen.blit(self.right_button, self.rects["right"])
-            self.screen.blit(self.down_button, self.rects["down"])
-            self.screen.blit(self.words["pause"], (46, 665))
-            self.screen.blit(self.words["sound"], (136, 665))
-            self.screen.blit(self.words["reset"], (226, 665))
-            self.screen.blit(self.words["space"], (107, 868))
+            self.screen.blit(
+                self.images["green_pushed"] if self.pause_button else
+                self.images["green"], self.rects["pause"])
+            self.screen.blit(
+                self.images["green_pushed"] if self.sound_button else
+                self.images["green"], self.rects["sound"])
+            self.screen.blit(
+                self.images["red_pushed"] if self.reset_button else
+                self.images["red"], self.rects["reset"])
+            self.screen.blit(
+                self.images["blue_lg_pushed"] if self.space_button else
+                self.images["blue_lg"], self.rects["space"])
+            self.screen.blit(
+                self.images["blue_sm_pushed"] if self.left_button else
+                self.images["blue_sm"], self.rects["left"])
+            self.screen.blit(
+                self.images["blue_sm_pushed"]
+                if self.up_button else self.images["blue_sm"], self.rects["up"])
+            self.screen.blit(
+                self.images["blue_sm_pushed"] if self.right_button else
+                self.images["blue_sm"], self.rects["right"])
+            self.screen.blit(
+                self.images["blue_sm_pushed"] if self.down_button else
+                self.images["blue_sm"], self.rects["down"])
+            self.screen.blit(self.words["pause"], (40, 665))
+            self.screen.blit(self.words["sound"], (130, 665))
+            self.screen.blit(self.words["reset"], (220, 665))
+            self.screen.blit(self.words["space"], (105, 868))
             self.screen.blit(self.words["left"], (346, 800))
             self.screen.blit(self.words["up"], (504, 630))
             self.screen.blit(self.words["right"], (520, 800))
             self.screen.blit(self.words["down"], (429, 886))
-            self.screen.blit(self.words["left_arrow"], (420, 740))
-            self.screen.blit(self.words["up_arrow"], (450, 715))
-            self.screen.blit(self.words["right_arrow"], (470, 740))
-            self.screen.blit(self.words["down_arrow"], (450, 765))
+            self.screen.blit(self.words["left_arrow"], (420, 738))
+            self.screen.blit(self.words["up_arrow"], (445, 713))
+            self.screen.blit(self.words["right_arrow"], (470, 738))
+            self.screen.blit(self.words["down_arrow"], (445, 763))
 
             # 绘制图标
             if self.sound:
@@ -460,7 +526,7 @@ class Game(object):
 
                 self.screen.blit(self.words["tetris"], (205, 330))
                 if self.time:
-                    self.screen.blit(self.words["start"], (165, 370))
+                    self.screen.blit(self.words["start"], (155, 370))
 
                 # 绘制分数
                 if self.best_or_last:
@@ -494,6 +560,12 @@ class Game(object):
                     self.screen.blit(
                         self.images["numbers"][int(line)] if line != " " else
                         self.images["number_none"], (460 - index * 14, 215))
+                if self.delay % 3 == 0 and self.up_button:
+                    self.sounds["biu2"].play()
+                    self.start_line = (self.start_line + 1) % 11
+                elif self.delay % 3 == 0 and self.down_button:
+                    self.sounds["biu2"].play()
+                    self.start_line = (self.start_line - 1) % 11
 
                 # 绘制level
                 self.screen.blit(self.words["level"], (370, 260))
@@ -501,11 +573,20 @@ class Game(object):
                 for index in range(5):
                     self.screen.blit(self.images["number_none"],
                                      (446 - index * 14, 290))
+                if self.delay % 3 == 0 and self.left_button:
+                    self.sounds["biu2"].play()
+                    self.level = (self.level - 2) % 6 + 1
+                elif self.delay % 3 == 0 and self.right_button:
+                    self.sounds["biu2"].play()
+                    self.level = self.level % 6 + 1
             # 游戏界面
             elif self.game:
                 ...
             # 游戏结束画面
             elif self.end:
+                ...
+            # Refresh画面
+            elif self.refresh:
                 ...
 
             # 记录当前帧数
