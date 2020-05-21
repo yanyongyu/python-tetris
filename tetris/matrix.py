@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-19 22:29:14
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-20 11:50:34
+@LastEditTime   : 2020-05-21 23:29:44
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -28,7 +28,10 @@ class Matrix(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.matrix = np.zeros((20, 10), dtype=np.int)
+        self.matrix = np.zeros((24, 14), dtype=np.int)
+        self.matrix[:, :2] = 1
+        self.matrix[:, -2:] = 1
+        self.matrix[-2:, :] = 1
         self.unfilled_rect = pygame.Surface((18, 18)).convert_alpha()
         self.filled_rect = pygame.Surface((18, 18)).convert_alpha()
         for i in range(20):
@@ -49,7 +52,7 @@ class Matrix(pygame.sprite.Sprite):
         for i in range(10):
             for j in range(20):
                 self.image.blit(
-                    self.filled_rect if self.matrix[j,
-                                                    i] else self.unfilled_rect,
+                    self.filled_rect if self.matrix[j + 2, i +
+                                                    2] else self.unfilled_rect,
                     (i * 20, j * 20))
         self.rect = self.image.get_rect()
