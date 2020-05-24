@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-19 22:29:14
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-23 18:10:22
+@LastEditTime   : 2020-05-24 11:42:51
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -33,6 +33,10 @@ class Matrix(pygame.sprite.Sprite):
         bag (List[Tetris]): 7bag
         current (Tetris): current tetris
         next (Tetris): next tetris
+        clearing (bool): whether there are lines to clear
+        clear_delay (int): delay of clearing
+        clear_lines (numpy.ndarray): array of lines whether to clear or not
+        clear_rects (List[pygame.Surface]): List of clearing animation surfaces
     """
 
     def __init__(self):
@@ -54,9 +58,20 @@ class Matrix(pygame.sprite.Sprite):
                     self.unfilled_rect.set_at((i, j), (135, 147, 114, 0))
                     self.filled_rect.set_at((i, j), (0, 0, 0, 0))
 
+        self.clear_rects = []
+        for index in range(8):
+            surface = self.unfilled_rect.copy()
+            for i in range(2 + index, 16 - index):
+                for j in range(2 + index, 16 - index):
+                    surface.set_at((i, j), (0, 0, 0, 255))
+            self.clear_rects.append(surface)
+
         self.bag = self.fill_bag()
         self.current = self.bag.pop(random.randint(0, len(self.bag) - 1))
         self.next = self.bag.pop(random.randint(0, len(self.bag) - 1))
+        self.clearing = False
+        self.clear_delay = 0
+        self.clear_lines = np.zeros((25,), dtype=np.bool)
         self.update()
 
     def update(self):
@@ -68,12 +83,28 @@ class Matrix(pygame.sprite.Sprite):
                 x:x + shape[1]] += self.current.matrixs[self.current.index]
         self.image = pygame.Surface((198, 398)).convert_alpha()
         self.image.fill((158, 173, 134, 0))
-        for i in range(10):
-            for j in range(20):
-                self.image.blit(
-                    self.filled_rect if matrix_[j + 2,
-                                                i + 2] else self.unfilled_rect,
-                    (i * 20, j * 20))
+        if self.clearing:
+            for i in range(10):
+                for j in range(20):
+                    if self.clear_lines[j + 2]:
+                        self.image.blit(self.clear_rects[self.clear_delay // 2],
+                                        (i * 20, j * 20))
+                    else:
+                        self.image.blit(
+                            self.filled_rect if matrix_[j + 2, i + 2] else
+                            self.unfilled_rect, (i * 20, j * 20))
+
+            self.clear_delay = (self.clear_delay + 1) % (2 *
+                                                         len(self.clear_rects))
+            if self.clear_delay == 0:
+                self.after_clear()
+        else:
+            for i in range(10):
+                for j in range(20):
+                    self.image.blit(
+                        self.filled_rect if matrix_[j + 2, i +
+                                                    2] else self.unfilled_rect,
+                        (i * 20, j * 20))
         self.rect = self.image.get_rect()
 
     def random_startline(self, start_line: int = 0):
@@ -88,6 +119,21 @@ class Matrix(pygame.sprite.Sprite):
         matrix_[y:y + shape[0],
                 x:x + shape[1]] += self.current.matrixs[self.current.index]
         return np.any(matrix_ > 1)
+
+    def check_clear(self):
+        self.clear_lines = np.all(self.matrix, axis=1)
+        self.clearing = np.any(self.clear_lines[2:-3])
+        for index, line in enumerate(self.clear_lines[2:-3]):
+            if line:
+                self.matrix[index + 2, 2:-2] = 0
+
+    def after_clear(self):
+        self.clearing = False
+        for index, line in enumerate(self.clear_lines[2:-3]):
+            if line:
+                tmp = np.delete(self.matrix, index + 2, 0)
+                self.matrix = np.insert(tmp, 0, 1, axis=0)
+                self.matrix[0, 2:-2] = 0
 
     def check_gameover(self) -> bool:
         return np.any(self.matrix[:2, 2:-2] > 0)

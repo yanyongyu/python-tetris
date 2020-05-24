@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-23 18:11:55
+@LastEditTime   : 2020-05-24 11:45:10
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -566,8 +566,7 @@ class Game(object):
                 # 绘制分数
                 if self.best_or_last:
                     self.screen.blit(self.words["best"], (370, 110))
-                    scores = list(f"{self.best_score: >6}")
-                    scores.reverse()
+                    scores = f"{self.best_score: >6}"[::-1]
                     for index, score in enumerate(scores):
                         self.screen.blit(
                             self.images["numbers"][int(score)]
@@ -575,8 +574,7 @@ class Game(object):
                             (460 - index * 14, 140))
                 else:
                     self.screen.blit(self.words["last"], (370, 110))
-                    scores = list(f"{self.last_score: >6}")
-                    scores.reverse()
+                    scores = f"{self.last_score: >6}"[::-1]
                     for index, score in enumerate(scores):
                         self.screen.blit(
                             self.images["numbers"][int(score)]
@@ -589,8 +587,7 @@ class Game(object):
 
                 # 绘制初始行数
                 self.screen.blit(self.words["start_line"], (370, 185))
-                start_line = list(f"{self.start_line: >6}")
-                start_line.reverse()
+                start_line = f"{self.start_line: >6}"[::-1]
                 for index, line in enumerate(start_line):
                     self.screen.blit(
                         self.images["numbers"][int(line)] if line != " " else
@@ -626,8 +623,7 @@ class Game(object):
             elif self.game:
                 # 绘制分数
                 self.screen.blit(self.words["score"], (370, 110))
-                scores = list(f"{self.score: >6}")
-                scores.reverse()
+                scores = f"{self.score: >6}"[::-1]
                 for index, score in enumerate(scores):
                     self.screen.blit(
                         self.images["numbers"][int(score)] if score != " " else
@@ -635,8 +631,7 @@ class Game(object):
 
                 # 绘制行数
                 self.screen.blit(self.words["clean"], (370, 185))
-                lines = list(f"{self.lines: >6}")
-                lines.reverse()
+                lines = f"{self.lines: >6}"[::-1]
                 for index, line in enumerate(lines):
                     self.screen.blit(
                         self.images["numbers"][int(line)] if line != " " else
@@ -666,7 +661,7 @@ class Game(object):
                 self.screen.blit(next_, (370, 365))
 
                 # 控制
-                if not self.pause:
+                if not self.pause and not self.matrix.clearing:
                     # 下落
                     if self.drop_tetris:
                         while not self.matrix.check_collision():
@@ -674,6 +669,7 @@ class Game(object):
                         self.matrix.current.y -= 1
                         self.drop_tetris = False
                         self.matrix.add_tetris()
+                        self.matrix.check_clear()
                         if self.matrix.check_gameover():
                             logging.info("Game Over")
                             self.switch_scene(Scene.END)
@@ -686,6 +682,7 @@ class Game(object):
                         if self.matrix.check_collision():
                             self.matrix.current.y -= 1
                             self.matrix.add_tetris()
+                            self.matrix.check_clear()
                             if self.matrix.check_gameover():
                                 logging.info("Game Over")
                                 self.switch_scene(Scene.END)
