@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-24 11:45:10
+@LastEditTime   : 2020-05-25 23:10:39
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -44,6 +44,7 @@ class Game(object):
         words (Dict[str, pygame.Surface]): Static words
         images (Dict[str, pygame.Surface]): Static images
         sounds (Dict[str, pygame.mixer.Sound]): Static sounds
+        scores (Dict[int, int]): Scores for lines cleared
         
         metrix (Matrix): Matrix Sprite
         
@@ -72,6 +73,9 @@ class Game(object):
         logo_index (int): Index of logo animation
         best_or_last (bool): Whether to show best or last
         best_or_last_index (int): Timer of best or last
+        end_score (int): Increasing score animation timer
+        refresh_fill (bool): Fill or clear when refreshing
+        refresh_index (int): Index of the line to refresh
     """
 
     def __init__(self):
@@ -146,7 +150,10 @@ class Game(object):
             "level": self.font.render("Level", True, (0, 0, 0)),
             "score": self.font.render("Score", True, (0, 0, 0)),
             "clean": self.font.render("Clean", True, (0, 0, 0)),
-            "next": self.font.render("Next", True, (0, 0, 0))
+            "next": self.font.render("Next", True, (0, 0, 0)),
+            "end": self.font.render("Game Over", True, (0, 0, 0)),
+            "continue": self.font.render("Press SPACE", True, (0, 0, 0)),
+            "reset": self.font.render("RESET", True, (0, 0, 0))
         }
 
         # Load images
@@ -170,6 +177,20 @@ class Game(object):
 
         # Init Matrix
         self.matrix = Matrix()
+
+        # Logo settings
+        self.logo = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
+            2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3
+        ]
+
+        # Score setting
+        self.scores = {0: 0, 1: 10, 2: 30, 3: 60, 4: 100}
+
+        # Refresh setting
+        self.refresh_fill = True
+        self.refresh_index = 0
 
         self.init_vars()
 
@@ -271,9 +292,9 @@ class Game(object):
         self.lines = 0
         data = Database.restore_data()
         self.best_score, self.last_score = data[0], data[1]
-        self.sound = bool(data[2])
-        self.start_line, self.level = data[3], data[4]
+        self.start_line, self.level = data[2], data[3]
         self.pause = False
+        self.sound = True
 
         # 按钮
         self.pause_button = False
@@ -293,17 +314,15 @@ class Game(object):
         self.time = True
 
         # Logo
-        self.logo = [
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
-            2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3
-        ]
         self.logo_flip = False
         self.logo_index = 0
 
         # 分数
         self.best_or_last = True
         self.best_or_last_index = 0
+
+        # 结算
+        self.end_score = 0
 
     def switch_scene(self, scene: Scene):
         """Switch current scene
@@ -337,6 +356,16 @@ class Game(object):
     def switch_sound(self):
         self.sound = not self.sound
         pygame.mixer.music.set_volume(0.5 if self.sound else 0)
+
+    def store_score(self):
+        logging.info(f"Score: {self.score}")
+        self.last_score = self.score
+        if self.score > self.best_score:
+            self.best_score = self.score
+        Database.update_data(best=self.best_score, last=self.last_score)
+
+    def store_setting(self):
+        Database.update_data(start_line=self.start_line, level=self.level)
 
     def start(self):
         """Main game loop."""
@@ -388,10 +417,13 @@ class Game(object):
                         self.space_button = False
                         if self.home:
                             self.sounds["start"].play()
+                            self.store_setting()
                             self.matrix.random_startline(self.start_line)
                             self.switch_scene(Scene.GAME)
                         elif self.game:
                             self.drop_tetris = False
+                        elif self.end:
+                            self.switch_scene(Scene.REFRESH)
                     elif event.key == gloc.K_LEFT:
                         self.left_button = False
                     elif event.key == gloc.K_UP:
@@ -446,10 +478,13 @@ class Game(object):
                                 "space"].collidepoint(pos):
                             if self.home:
                                 self.sounds["start"].play()
+                                self.store_setting()
                                 self.matrix.random_startline(self.start_line)
                                 self.switch_scene(Scene.GAME)
                             elif self.game:
                                 self.drop_tetris = False
+                            elif self.end:
+                                self.switch_scene(Scene.REFRESH)
                         elif self.left_button and self.rects[
                                 "left"].collidepoint(pos):
                             ...
@@ -664,17 +699,25 @@ class Game(object):
                 if not self.pause and not self.matrix.clearing:
                     # 下落
                     if self.drop_tetris:
+                        self.sounds["drop"].play()
                         while not self.matrix.check_collision():
                             self.matrix.current.y += 1
                         self.matrix.current.y -= 1
                         self.drop_tetris = False
                         self.matrix.add_tetris()
-                        self.matrix.check_clear()
+                        cleared = self.matrix.check_clear()
+                        if cleared:
+                            self.sounds["clear"].play()
+                        self.score += self.scores.get(cleared, 100)
+                        self.lines += cleared
                         if self.matrix.check_gameover():
                             logging.info("Game Over")
+                            self.sounds["end"].play()
+                            self.store_score()
                             self.switch_scene(Scene.END)
-                        logging.info("Next")
-                        self.matrix.next_tetris()
+                        else:
+                            logging.info("Next")
+                            self.matrix.next_tetris()
                     if self.drop_delay % 20 == 0 or (self.delay % 3 == 0 and
                                                      self.down_button):
                         self.matrix.current.y += 1
@@ -682,18 +725,26 @@ class Game(object):
                         if self.matrix.check_collision():
                             self.matrix.current.y -= 1
                             self.matrix.add_tetris()
-                            self.matrix.check_clear()
+                            cleared = self.matrix.check_clear()
+                            if cleared:
+                                self.sounds["clear"].play()
+                            self.score += self.scores.get(cleared, 100)
+                            self.lines += cleared
                             if self.matrix.check_gameover():
                                 logging.info("Game Over")
+                                self.sounds["end"].play()
+                                self.store_score()
                                 self.switch_scene(Scene.END)
-                            logging.info("Next")
-                            self.matrix.next_tetris()
+                            else:
+                                logging.info("Next")
+                                self.matrix.next_tetris()
                     self.drop_delay = (self.drop_delay + 1) % 20
 
                     # 左右移动
                     if self.left_button:
                         if self.left_button_delay == 0:
                             self.matrix.current.x -= 1
+                            self.sounds["biu2"].play()
                             if self.matrix.check_collision():
                                 self.matrix.current.x += 1
                         self.left_button_delay = (self.left_button_delay +
@@ -701,6 +752,7 @@ class Game(object):
                     elif self.right_button:
                         if self.right_button_delay == 0:
                             self.matrix.current.x += 1
+                            self.sounds["biu2"].play()
                             if self.matrix.check_collision():
                                 self.matrix.current.x -= 1
                         self.right_button_delay = (self.right_button_delay +
@@ -710,15 +762,61 @@ class Game(object):
                     if self.up_button:
                         if self.up_button_delay == 0:
                             self.matrix.current.rotate(False)
+                            self.sounds["biu1"].play()
                             if self.matrix.check_collision():
                                 self.matrix.current.rotate(True)
                         self.up_button_delay = (self.up_button_delay + 1) % 5
             # 游戏结束画面
             elif self.end:
-                ...
+                self.screen.blit(self.words["end"], (375, 110))
+
+                self.screen.blit(self.words["score"], (370, 140))
+                scores = self.score if self.end_score > self.score else self.end_score
+                scores = f"{scores: >6}"[::-1]
+                for index, score in enumerate(scores):
+                    self.screen.blit(
+                        self.images["numbers"][int(score)] if score != " " else
+                        self.images["number_none"], (460 - index * 14, 170))
+
+                self.screen.blit(self.words["clean"], (370, 215))
+                lines = self.lines if self.end_score > self.lines else self.end_score
+                lines = f"{lines: >6}"[::-1]
+                for index, line in enumerate(lines):
+                    self.screen.blit(
+                        self.images["numbers"][int(line)] if line != " " else
+                        self.images["number_none"], (460 - index * 14, 245))
+
+                self.screen.blit(self.words["best"], (370, 290))
+                scores = self.best_score if self.end_score > self.best_score else self.end_score
+                scores = f"{scores: >6}"[::-1]
+                for index, score in enumerate(scores):
+                    self.screen.blit(
+                        self.images["numbers"][int(score)] if score != " " else
+                        self.images["number_none"], (460 - index * 14, 320))
+
+                self.screen.blit(self.words["continue"], (360, 400))
+
+                if self.end_score <= max(self.score, self.lines,
+                                         self.best_score):
+                    self.end_score += 5
             # Refresh画面
             elif self.refresh:
-                ...
+                self.screen.blit(self.words["reset"], (385, 110))
+                if self.delay % 2 == 0:
+                    if self.refresh_fill:
+                        self.matrix.matrix[21 - self.refresh_index, 3:-3] = 1
+                        self.refresh_index += 1
+                        if self.refresh_index == 22:
+                            self.refresh_fill = False
+                            self.matrix.fill_bag()
+                            self.matrix.next_tetris()
+                    else:
+                        self.refresh_index -= 1
+                        self.matrix.matrix[21 - self.refresh_index, 3:-3] = 0
+                        if self.refresh_index == 0:
+                            self.refresh_fill = True
+                            self.init_vars()
+                            self.switch_scene(Scene.HOME)
 
             # 记录当前帧数
             self.delay = (self.delay + 1) % 30

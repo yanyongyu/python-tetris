@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-18 16:22:25
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-19 22:26:11
+@LastEditTime   : 2020-05-25 22:55:30
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -30,7 +30,6 @@ class Database:
                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                        "best INTEGER DEFAULT 0,"
                        "last INTEGER DEFAULT 0,"
-                       "sound INTEGER DEFAULT 1,"
                        "start_line INTEGER DEFAULT 0,"
                        "level INTEGER DEFAULT 1"
                        ")")
@@ -43,8 +42,7 @@ class Database:
         conn.commit()
 
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT best, last, sound, start_line, level FROM tetris")
+        cursor.execute("SELECT best, last, start_line, level FROM tetris")
         result = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -56,3 +54,6 @@ class Database:
         cursor = conn.cursor()
         cursor.execute("UPDATE tetris SET " + ", ".join(
             f"{key}={value}" for key, value in kwargs.items()) + " WHERE id=0")
+        cursor.close()
+        conn.commit()
+        conn.close()

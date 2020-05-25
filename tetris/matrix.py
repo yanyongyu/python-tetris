@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-19 22:29:14
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-24 11:42:51
+@LastEditTime   : 2020-05-25 22:41:24
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -24,7 +24,7 @@ class Matrix(pygame.sprite.Sprite):
     """Matrix
 
     Attributes:
-        matrix (numpy.ndarray): matrix (20x10)
+        matrix (numpy.ndarray): matrix (25x16)
         filled_rect (pygame.Surface): filled rectangle
         unfilled_rect (pygame.Surface): unfilled rectangle
         image (pygame.Surface): surface
@@ -42,9 +42,9 @@ class Matrix(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.matrix = np.zeros((25, 14), dtype=np.int)
-        self.matrix[:, :2] = 1
-        self.matrix[:, -2:] = 1
+        self.matrix = np.zeros((25, 16), dtype=np.int)
+        self.matrix[:, :3] = 1
+        self.matrix[:, -3:] = 1
         self.matrix[-3:, :] = 1
         self.unfilled_rect = pygame.Surface((18, 18)).convert_alpha()
         self.filled_rect = pygame.Surface((18, 18)).convert_alpha()
@@ -75,7 +75,7 @@ class Matrix(pygame.sprite.Sprite):
         self.update()
 
     def update(self):
-        x = self.current.x + 2
+        x = self.current.x + 3
         y = self.current.y + 2
         shape = self.current.matrix.shape
         matrix_ = self.matrix.copy()
@@ -91,7 +91,7 @@ class Matrix(pygame.sprite.Sprite):
                                         (i * 20, j * 20))
                     else:
                         self.image.blit(
-                            self.filled_rect if matrix_[j + 2, i + 2] else
+                            self.filled_rect if matrix_[j + 2, i + 3] else
                             self.unfilled_rect, (i * 20, j * 20))
 
             self.clear_delay = (self.clear_delay + 1) % (2 *
@@ -103,16 +103,16 @@ class Matrix(pygame.sprite.Sprite):
                 for j in range(20):
                     self.image.blit(
                         self.filled_rect if matrix_[j + 2, i +
-                                                    2] else self.unfilled_rect,
+                                                    3] else self.unfilled_rect,
                         (i * 20, j * 20))
         self.rect = self.image.get_rect()
 
     def random_startline(self, start_line: int = 0):
         self.matrix[-3 - start_line:-3,
-                    2:-2] += np.random.randint(0, 2, (start_line, 10))
+                    3:-3] += np.random.randint(0, 2, (start_line, 10))
 
     def check_collision(self) -> bool:
-        x = self.current.x + 2
+        x = self.current.x + 3
         y = self.current.y + 2
         shape = self.current.matrix.shape
         matrix_ = self.matrix.copy()
@@ -120,12 +120,13 @@ class Matrix(pygame.sprite.Sprite):
                 x:x + shape[1]] += self.current.matrixs[self.current.index]
         return np.any(matrix_ > 1)
 
-    def check_clear(self):
+    def check_clear(self) -> int:
         self.clear_lines = np.all(self.matrix, axis=1)
         self.clearing = np.any(self.clear_lines[2:-3])
-        for index, line in enumerate(self.clear_lines[2:-3]):
-            if line:
-                self.matrix[index + 2, 2:-2] = 0
+        # for index, line in enumerate(self.clear_lines[2:-3]):
+        #     if line:
+        #         self.matrix[index + 2, 2:-2] = 0
+        return sum(self.clear_lines[2:-3])
 
     def after_clear(self):
         self.clearing = False
@@ -133,13 +134,13 @@ class Matrix(pygame.sprite.Sprite):
             if line:
                 tmp = np.delete(self.matrix, index + 2, 0)
                 self.matrix = np.insert(tmp, 0, 1, axis=0)
-                self.matrix[0, 2:-2] = 0
+                self.matrix[0, 3:-3] = 0
 
     def check_gameover(self) -> bool:
-        return np.any(self.matrix[:2, 2:-2] > 0)
+        return np.any(self.matrix[:2, 3:-3] > 0)
 
     def add_tetris(self):
-        x = self.current.x + 2
+        x = self.current.x + 3
         y = self.current.y + 2
         shape = self.current.matrix.shape
         self.matrix[y:y + shape[0],
