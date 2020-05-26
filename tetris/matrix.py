@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-19 22:29:14
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-25 22:41:24
+@LastEditTime   : 2020-05-26 14:28:58
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -123,9 +123,6 @@ class Matrix(pygame.sprite.Sprite):
     def check_clear(self) -> int:
         self.clear_lines = np.all(self.matrix, axis=1)
         self.clearing = np.any(self.clear_lines[2:-3])
-        # for index, line in enumerate(self.clear_lines[2:-3]):
-        #     if line:
-        #         self.matrix[index + 2, 2:-2] = 0
         return sum(self.clear_lines[2:-3])
 
     def after_clear(self):

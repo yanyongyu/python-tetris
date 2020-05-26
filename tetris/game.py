@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-25 23:10:39
+@LastEditTime   : 2020-05-26 14:36:41
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -133,7 +133,7 @@ class Game(object):
             "tetris": self.font.render("T E T R I S", True, (0, 0, 0)),
             "pause": self.font.render("Pause(P)", True, (0, 0, 0)),
             "sound": self.font.render("Sound(S)", True, (0, 0, 0)),
-            "reset": self.font.render("Reset(R)", True, (0, 0, 0)),
+            "refresh": self.font.render("Reset(R)", True, (0, 0, 0)),
             "space": self.font.render("Drop(SPACE)", True, (0, 0, 0)),
             "left": self.font.render("Left", True, (0, 0, 0)),
             "up": self.font.render("Rotation", True, (0, 0, 0)),
@@ -540,7 +540,7 @@ class Game(object):
                 self.images["blue_sm"], self.rects["down"])
             self.screen.blit(self.words["pause"], (40, 665))
             self.screen.blit(self.words["sound"], (130, 665))
-            self.screen.blit(self.words["reset"], (220, 665))
+            self.screen.blit(self.words["refresh"], (220, 665))
             self.screen.blit(self.words["space"], (105, 868))
             self.screen.blit(self.words["left"], (346, 800))
             self.screen.blit(self.words["up"], (504, 630))
