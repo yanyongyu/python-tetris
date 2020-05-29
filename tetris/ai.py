@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-26 22:09:24
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-29 19:45:39
+@LastEditTime   : 2020-05-29 23:11:40
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -22,12 +22,16 @@ class Result(object):
     index: int
     x: int
     y: int
-    score: int
+    score: float
     priority: int
 
 
 def _check_collision(matrix: np.ndarray) -> bool:
     return np.any(matrix > 1)
+
+
+def _landing_height(current: np.ndarray, y: int) -> int:
+    return 20 - y - np.argmax(np.any(current, axis=1))
 
 
 def _eroded_piece_cells_metric(matrix: np.ndarray, current: np.ndarray,
@@ -39,12 +43,13 @@ def _eroded_piece_cells_metric(matrix: np.ndarray, current: np.ndarray,
         if line:
             score += sum(current[index - y])
     return score * cleared_num
+    # return cleared_num
 
 
 def _board_row_transitions(matrix: np.ndarray) -> int:
     score = 0
     for j in range(20):
-        for i in range(1, 10):
+        for i in range(11):
             if matrix[j + 2, i + 3] != matrix[j + 2, i + 2]:
                 score += 1
     return score
@@ -52,8 +57,10 @@ def _board_row_transitions(matrix: np.ndarray) -> int:
 
 def _board_column_transitions(matrix: np.ndarray) -> int:
     score = 0
+    matrix_ = matrix.copy()
+    matrix_[1, :] = 1
     for i in range(10):
-        for j in range(1, 20):
+        for j in range(21):
             if matrix[j + 2, i + 3] != matrix[j + 1, i + 3]:
                 score += 1
     return score
@@ -110,7 +117,7 @@ def pierre_dellacherie(matrix: np.ndarray,
             if y >= 0:
                 # 计算评估参数
                 # 方块海拔
-                landing_height = 20 - y
+                landing_height = _landing_height(shape, y)
                 # 消除行数
                 eroded_piece_cells_metric = _eroded_piece_cells_metric(
                     new_matrix, shape, y)
@@ -124,10 +131,18 @@ def pierre_dellacherie(matrix: np.ndarray,
                 board_wells = _board_wells(new_matrix)
 
                 # 评估分数
-                score = (-45 * landing_height + 34 * eroded_piece_cells_metric -
-                         32 * board_row_transitions -
-                         93 * board_column_transitions -
-                         79 * board_buried_holes - 34 * board_wells)
+                # Origin PD
+                # score = (-landing_height + eroded_piece_cells_metric -
+                #          board_row_transitions - board_column_transitions -
+                #          4 * board_buried_holes - board_wells)
+                # El-Tetris
+                # https://imake.ninja/el-tetris-an-improvement-on-pierre-dellacheries-algorithm/
+                score = (-4.500158825082766 * landing_height +
+                         3.4181268101392694 * eroded_piece_cells_metric -
+                         3.2178882868487753 * board_row_transitions -
+                         9.348695305445199 * board_column_transitions -
+                         7.899265427351652 * board_buried_holes -
+                         3.3855972247263626 * board_wells)
                 # 计算优先级
                 priority = 100 * abs((10 - width) // 2 - x) + index
 
