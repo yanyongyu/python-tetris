@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-26 22:09:24
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-28 18:14:31
+@LastEditTime   : 2020-05-29 19:45:39
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -78,12 +78,13 @@ def _board_wells(matrix: np.ndarray) -> int:
                                          2] == 1 and matrix[j + 2, i + 4] == 1:
                 wells += 1
             else:
-                score += wells * (wells + 1) / 2
+                score += wells * (wells + 1) // 2
                 wells = 0
     return score
 
 
-def pierre_dellacherie(matrix: np.ndarray, current: List[np.ndarray]):
+def pierre_dellacherie(matrix: np.ndarray,
+                       current: List[np.ndarray]) -> List[Result]:
     """Pierre Dellacherie algorithm for tetris
 
     Args:
@@ -107,7 +108,6 @@ def pierre_dellacherie(matrix: np.ndarray, current: List[np.ndarray]):
 
             # 找到一个可摆放位置
             if y >= 0:
-                print(x, y)
                 # 计算评估参数
                 # 方块海拔
                 landing_height = 20 - y
@@ -139,7 +139,7 @@ def pierre_dellacherie(matrix: np.ndarray, current: List[np.ndarray]):
                     f"\n[.] board_column_transitions: {board_column_transitions}"
                     f"\n[.] board_buried_holes: {board_buried_holes}"
                     f"\n[.] board_wells: {board_wells}")
-                logging.debug(f"\n[i]x: {x}, index: {index}"
+                logging.debug(f"\n[i] x: {x}, y: {y}, index: {index}"
                               f"\n[i] score: {score},  priority: {priority}")
     return sorted(results, key=lambda x: (x.score, -x.priority), reverse=True)
 

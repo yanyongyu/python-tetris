@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-26 14:36:41
+@LastEditTime   : 2020-05-29 19:27:06
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -21,6 +21,7 @@ import pygame.locals as gloc
 from .typing import Scene
 from .matrix import Matrix
 from .store import Database
+from .ai import pierre_dellacherie
 
 
 class Game(object):
@@ -59,6 +60,7 @@ class Game(object):
         start_line (int): Start line number
         level (int): Level number
         pause (bool): Pause game
+        ai (bool): Whether to play the game with AI
         left_button (bool): Whether left button is pressed or not
         left_button_delay (bool): Delay of left button
         right_button (bool): Whether right button is pressed or not
@@ -295,6 +297,7 @@ class Game(object):
         self.start_line, self.level = data[2], data[3]
         self.pause = False
         self.sound = True
+        self.ai = False
 
         # 按钮
         self.pause_button = False
@@ -413,6 +416,8 @@ class Game(object):
                     elif event.key == gloc.K_r:
                         self.reset_button = False
                         self.switch_scene(Scene.REFRESH)
+                    elif event.key == gloc.K_a:
+                        self.ai = not self.ai
                     elif event.key == gloc.K_SPACE:
                         self.space_button = False
                         if self.home:
@@ -720,6 +725,19 @@ class Game(object):
                             self.matrix.next_tetris()
                     if self.drop_delay % 20 == 0 or (self.delay % 3 == 0 and
                                                      self.down_button):
+                        if self.ai:
+                            ai_results = pierre_dellacherie(
+                                self.matrix.matrix, self.matrix.current.matrixs)
+                            if ai_results:
+                                best_choice = ai_results[0]
+                                self.matrix.current.x = best_choice.x
+                                self.matrix.current.y = best_choice.y
+                                self.matrix.current.index = best_choice.index
+                                logging.info(
+                                    f"[AI Choice] x: {best_choice.x} | "
+                                    f"y: {best_choice.y} | "
+                                    f"score: {best_choice.score}")
+
                         self.matrix.current.y += 1
                         # 检测碰撞
                         if self.matrix.check_collision():
