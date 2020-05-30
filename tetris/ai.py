@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-26 22:09:24
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-29 23:11:40
+@LastEditTime   : 2020-05-30 13:33:09
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -93,6 +93,10 @@ def _board_wells(matrix: np.ndarray) -> int:
 def pierre_dellacherie(matrix: np.ndarray,
                        current: List[np.ndarray]) -> List[Result]:
     """Pierre Dellacherie algorithm for tetris
+    
+    Improve:
+        El-Tetris
+        https://imake.ninja/el-tetris-an-improvement-on-pierre-dellacheries-algorithm/
 
     Args:
         matrix (np.ndarray): Matrix of the game
@@ -100,7 +104,7 @@ def pierre_dellacherie(matrix: np.ndarray,
     """
     results = []
     for index, shape in enumerate(current):
-        for x in range(9):
+        for x in range(-1, 9):
             y = 0
             height, width = shape.shape
             new_matrix = matrix.copy()
@@ -136,7 +140,6 @@ def pierre_dellacherie(matrix: np.ndarray,
                 #          board_row_transitions - board_column_transitions -
                 #          4 * board_buried_holes - board_wells)
                 # El-Tetris
-                # https://imake.ninja/el-tetris-an-improvement-on-pierre-dellacheries-algorithm/
                 score = (-4.500158825082766 * landing_height +
                          3.4181268101392694 * eroded_piece_cells_metric -
                          3.2178882868487753 * board_row_transitions -

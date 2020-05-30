@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-20 16:50:46
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-23 16:35:48
+@LastEditTime   : 2020-05-30 13:00:59
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -29,10 +29,10 @@ class Tetris(object):
     matrix: np.ndarray = None
     matrixs: List[np.ndarray] = []
 
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int, index: int = 0):
         self.x = x
         self.y = y
-        self.index = 0
+        self.index = index
 
     def rotate(self, direction: bool = False):
         """Rotate the tetris
