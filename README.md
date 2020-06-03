@@ -2,7 +2,7 @@
  * @Author         : yanyongyu
  * @Date           : 2020-05-14 22:26:04
  * @LastEditors    : yanyongyu
- * @LastEditTime   : 2020-06-03 22:38:12
+ * @LastEditTime   : 2020-06-03 23:12:53
  * @Description    : None
  * @GitHub         : https://github.com/yanyongyu
 -->
@@ -65,14 +65,27 @@ The height where the piece is put. Top or center of the piece is both ok.
 
 Example:
 
-⬜⬜⬜⬜⬜<font color="aqua">⬛</font>⬜⬜⬜⬜  
-⬜⬜⬛⬛<font color="aqua">⬛</font><font color="aqua">⬛</font>⬛⬛⬜⬜  
-⬛⬛⬛⬛<font color="aqua">⬛</font>⬛⬛⬛⬛⬛  
-⬛⬜⬜⬛⬛⬛⬛⬛⬛⬛
+:white_large_square::white_large_square::white_large_square::white_large_square::white_large_square::blue_square::white_large_square::white_large_square::white_large_square::white_large_square:  
+:white_large_square::white_large_square::black_large_square::black_large_square::blue_square::blue_square::black_large_square::black_large_square::white_large_square::white_large_square:  
+:black_large_square::black_large_square::black_large_square::black_large_square::blue_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square:  
+:black_large_square::white_large_square::white_large_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square:
 
 Height: `4` or `3`
 
 ### Eroded Piece Cells Metric
+
+The number of rows eliminated × The number of the squares the piece contributed
+
+Example:
+
+:white_large_square::white_large_square::white_large_square::white_large_square::white_large_square::blue_square::white_large_square::white_large_square::white_large_square::white_large_square:  
+:white_large_square::white_large_square::black_large_square::black_large_square::blue_square::blue_square::black_large_square::black_large_square::white_large_square::white_large_square:  
+:black_large_square::black_large_square::black_large_square::black_large_square::blue_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square:  
+:black_large_square::white_large_square::white_large_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square::black_large_square:
+
+Eliminated lines: `1`
+Contribute: `1`
+Eroded Piece Cells Metric: `1 × 1 = 1`
 
 ### Board Row Transitions
 
