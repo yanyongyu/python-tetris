@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 22:08:31
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-15 12:07:51
+@LastEditTime   : 2020-06-01 17:05:00
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -27,6 +27,7 @@ def main():
     except Exception as e:
         logging.exception(e)
     finally:
+        game.store_setting()
         pygame.quit()
 
 

@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-29 19:27:06
+@LastEditTime   : 2020-06-02 17:23:01
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -46,10 +46,12 @@ class Game(object):
         images (Dict[str, pygame.Surface]): Static images
         sounds (Dict[str, pygame.mixer.Sound]): Static sounds
         scores (Dict[int, int]): Scores for lines cleared
+        speeds (Dict[int, int]): Speeds for each level
         
         metrix (Matrix): Matrix Sprite
         
         delay (int): Delay
+        background (pygame.Surface): Background picture
         drop_delay (int): Delay of dropping the tetris
         drop_tetris (int): Whether to drop the tetris
         score (int): Game score
@@ -59,6 +61,8 @@ class Game(object):
         sound (bool): Sound on or off
         start_line (int): Start line number
         level (int): Level number
+        level_upgrading (bool): Whether level is upgrading
+        level_upgrade_delay (int): Delay of level upgrade animation
         pause (bool): Pause game
         ai (bool): Whether to play the game with AI
         left_button (bool): Whether left button is pressed or not
@@ -190,6 +194,9 @@ class Game(object):
         # Score setting
         self.scores = {0: 0, 1: 10, 2: 30, 3: 60, 4: 100}
 
+        # Speed setting
+        self.speeds = {1: 20, 2: 16, 3: 13, 4: 10, 5: 6, 6: 3}
+
         # Refresh setting
         self.refresh_fill = True
         self.refresh_index = 0
@@ -199,9 +206,26 @@ class Game(object):
     def load_images(self):
         """Load static images"""
         # 背景
-        background = pygame.image.load(
-            os.path.join(os.path.dirname(__file__),
-                         "assets/image/background.png")).convert_alpha()
+        backgrounds = [
+            pygame.image.load(
+                os.path.join(os.path.dirname(__file__),
+                             "assets/image/background1.png")).convert_alpha(),
+            pygame.image.load(
+                os.path.join(os.path.dirname(__file__),
+                             "assets/image/background2.png")).convert_alpha(),
+            pygame.image.load(
+                os.path.join(os.path.dirname(__file__),
+                             "assets/image/background3.png")).convert_alpha(),
+            pygame.image.load(
+                os.path.join(os.path.dirname(__file__),
+                             "assets/image/background4.png")).convert_alpha(),
+            # pygame.image.load(
+            #     os.path.join(os.path.dirname(__file__),
+            #                  "assets/image/background5.png")).convert_alpha(),
+            # pygame.image.load(
+            #     os.path.join(os.path.dirname(__file__),
+            #                  "assets/image/background6.png")).convert_alpha()
+        ]
 
         # 按钮
         red = pygame.image.load(
@@ -265,7 +289,7 @@ class Game(object):
         colon_none = icons.subsurface((243, 25, 14, 24))
 
         self.images = {
-            "background": background,
+            "backgrounds": backgrounds,
             "red": red,
             "red_pushed": red_pushed,
             "green": green,
@@ -298,6 +322,11 @@ class Game(object):
         self.pause = False
         self.sound = True
         self.ai = False
+        self.level_upgrading = False
+        self.level_upgrade_delay = 0
+
+        # 背景
+        self.background = self.images["backgrounds"][self.level - 1]
 
         # 按钮
         self.pause_button = False
@@ -359,6 +388,8 @@ class Game(object):
     def switch_sound(self):
         self.sound = not self.sound
         pygame.mixer.music.set_volume(0.5 if self.sound else 0)
+        for each in self.sounds.values():
+            each.set_volume(0.5 if self.sound else 0)
 
     def store_score(self):
         logging.info(f"Score: {self.score}")
@@ -415,6 +446,7 @@ class Game(object):
                         self.switch_sound()
                     elif event.key == gloc.K_r:
                         self.reset_button = False
+                        self.store_setting()
                         self.switch_scene(Scene.REFRESH)
                     elif event.key == gloc.K_a:
                         self.ai = not self.ai
@@ -478,6 +510,7 @@ class Game(object):
                             self.switch_sound()
                         elif self.reset_button and self.rects[
                                 "reset"].collidepoint(pos):
+                            self.store_setting()
                             self.switch_scene(Scene.REFRESH)
                         elif self.space_button and self.rects[
                                 "space"].collidepoint(pos):
@@ -512,7 +545,7 @@ class Game(object):
                         self.down_button = False
 
             # 基础背景绘制
-            self.screen.blit(self.images["background"], (0, 0))
+            self.screen.blit(self.background, (0, 0))
             self.screen.fill((158, 173, 134), (126, 90, 360, 445))
             pygame.draw.rect(self.screen, (0, 0, 0), (140, 104, 210, 410), 2)
             self.matrix.update()
@@ -698,7 +731,23 @@ class Game(object):
                                 self.matrix.filled_rect
                                 if self.matrix.next.matrix[j, i] else
                                 self.matrix.unfilled_rect, (i * 20, j * 20))
-                self.screen.blit(next_, (370, 365))
+                self.screen.blit(next_, (380, 365))
+
+                if self.score > 2500 and self.level < 6:
+                    self.level = 6
+                    self.level_upgrading = True
+                elif self.score > 2000 and self.level < 2:
+                    self.level = 5
+                    self.level_upgrading = True
+                elif self.score > 1500 and self.level < 2:
+                    self.level = 4
+                    self.level_upgrading = True
+                elif self.score > 1000 and self.level < 2:
+                    self.level = 3
+                    self.level_upgrading = True
+                elif self.score > 500 and self.level < 2:
+                    self.level = 2
+                    self.level_upgrading = True
 
                 # 控制
                 if not self.pause and not self.matrix.clearing:
@@ -723,8 +772,8 @@ class Game(object):
                         else:
                             logging.info("Next")
                             self.matrix.next_tetris()
-                    if self.drop_delay % 20 == 0 or (self.delay % 3 == 0 and
-                                                     self.down_button):
+                    if self.drop_delay % self.speeds[self.level] == 0 or (
+                            self.delay % 3 == 0 and self.down_button):
                         if self.ai:
                             ai_results = pierre_dellacherie(
                                 self.matrix.matrix, self.matrix.current.matrixs)
@@ -816,7 +865,8 @@ class Game(object):
 
                 if self.end_score <= max(self.score, self.lines,
                                          self.best_score):
-                    self.end_score += 5
+                    self.end_score += max(self.score, self.lines,
+                                          self.best_score) // 150
             # Refresh画面
             elif self.refresh:
                 self.screen.blit(self.words["reset"], (385, 110))
@@ -835,6 +885,24 @@ class Game(object):
                             self.refresh_fill = True
                             self.init_vars()
                             self.switch_scene(Scene.HOME)
+
+            # 升级动画
+            if self.level_upgrading:
+                self.level_upgrade_delay = (self.level_upgrade_delay + 1) % 16
+
+                # 过渡遮罩层
+                alpha = 256 - abs(256 - 32 * self.level_upgrade_delay)
+                mask = pygame.Surface(self.screen_size)
+                mask.fill((0, 0, 0))
+                mask.set_alpha(alpha if alpha < 256 else 255)
+                self.screen.blit(mask, (0, 0))
+
+                if self.level_upgrade_delay == 0:
+                    # 退出过渡
+                    self.level_upgrading = False
+                elif self.level_upgrade_delay == 8:
+                    # 更换背景
+                    self.background = self.images["backgrounds"][self.level - 1]
 
             # 记录当前帧数
             self.delay = (self.delay + 1) % 30

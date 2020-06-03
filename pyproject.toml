@@ -1,9 +1,20 @@
 [tool.poetry]
-name = "tetris"
-version = "0.1.0"
-description = "tetris game made by pygame"
+name = "pytetris"
+version = "1.0.0"
+description = "tetris game with ai made by pygame"
 authors = ["yanyongyu <https://github.com/yanyongyu>"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/yanyongyu/python-tetris"
+keywords = ["pygame", "tetris", "ai", "pierre_dellacherie"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "License :: Free for non-commercial use",
+    "Programming Language :: Python",
+    "Topic :: Games/Entertainment :: Puzzle Games"
+]
+exclude = ["pytetris/*.db"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -19,7 +30,7 @@ url = "https://mirrors.aliyun.com/pypi/simple/"
 default = true
 
 [tool.poetry.scripts]
-game = "tetris.__main__:main"
+game = "pytetris.__main__:main"
 
 [build-system]
 requires = ["poetry>=0.12"]

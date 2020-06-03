@@ -8,7 +8,7 @@
       "name": "开始游戏",
       "type": "python",
       "request": "launch",
-      "module": "tetris"
+      "module": "pytetris"
     },
     {
       "name": "运行测试",
