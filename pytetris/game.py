@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-06-02 17:23:01
+@LastEditTime   : 2020-06-04 10:17:39
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -195,7 +195,7 @@ class Game(object):
         self.scores = {0: 0, 1: 10, 2: 30, 3: 60, 4: 100}
 
         # Speed setting
-        self.speeds = {1: 20, 2: 16, 3: 13, 4: 10, 5: 6, 6: 3}
+        self.speeds = {1: 30, 2: 15, 3: 6, 4: 5, 5: 3, 6: 2}
 
         # Refresh setting
         self.refresh_fill = True
