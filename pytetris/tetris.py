@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-20 16:50:46
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-05-30 13:00:59
+@LastEditTime   : 2020-06-05 21:39:33
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -75,7 +75,7 @@ class TTetris(Tetris):
     """
     Shapes:
         0 1 0  0 1 0  0 0 0  0 1 0
-        1 1 1  0 1 1  1 1 1  1 1 0
+        1 1 1  1 1 0  1 1 1  0 1 1
         0 0 0  0 1 0  0 1 0  0 1 0
     """
 

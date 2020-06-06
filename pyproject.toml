@@ -2,7 +2,7 @@
 name = "pytetris"
 version = "1.0.0"
 description = "tetris game with ai made by pygame"
-authors = ["yanyongyu <https://github.com/yanyongyu>"]
+authors = ["yanyongyu <yanyongyu_1@126.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/yanyongyu/python-tetris"

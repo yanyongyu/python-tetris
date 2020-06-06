@@ -4,7 +4,7 @@
 @Author         : yanyongyu
 @Date           : 2020-05-14 21:23:34
 @LastEditors    : yanyongyu
-@LastEditTime   : 2020-06-04 10:17:39
+@LastEditTime   : 2020-06-06 19:15:13
 @Description    : None
 @GitHub         : https://github.com/yanyongyu
 """
@@ -51,7 +51,6 @@ class Game(object):
         metrix (Matrix): Matrix Sprite
         
         delay (int): Delay
-        background (pygame.Surface): Background picture
         drop_delay (int): Delay of dropping the tetris
         drop_tetris (int): Whether to drop the tetris
         score (int): Game score
@@ -195,7 +194,7 @@ class Game(object):
         self.scores = {0: 0, 1: 10, 2: 30, 3: 60, 4: 100}
 
         # Speed setting
-        self.speeds = {1: 30, 2: 15, 3: 6, 4: 5, 5: 3, 6: 2}
+        self.speeds = {1: 20, 2: 15, 3: 12, 4: 9, 5: 6, 6: 4}
 
         # Refresh setting
         self.refresh_fill = True
@@ -219,12 +218,12 @@ class Game(object):
             pygame.image.load(
                 os.path.join(os.path.dirname(__file__),
                              "assets/image/background4.png")).convert_alpha(),
-            # pygame.image.load(
-            #     os.path.join(os.path.dirname(__file__),
-            #                  "assets/image/background5.png")).convert_alpha(),
-            # pygame.image.load(
-            #     os.path.join(os.path.dirname(__file__),
-            #                  "assets/image/background6.png")).convert_alpha()
+            pygame.image.load(
+                os.path.join(os.path.dirname(__file__),
+                             "assets/image/background5.png")).convert_alpha(),
+            pygame.image.load(
+                os.path.join(os.path.dirname(__file__),
+                             "assets/image/background6.png")).convert_alpha()
         ]
 
         # 按钮
@@ -324,9 +323,6 @@ class Game(object):
         self.ai = False
         self.level_upgrading = False
         self.level_upgrade_delay = 0
-
-        # 背景
-        self.background = self.images["backgrounds"][self.level - 1]
 
         # 按钮
         self.pause_button = False
@@ -446,7 +442,6 @@ class Game(object):
                         self.switch_sound()
                     elif event.key == gloc.K_r:
                         self.reset_button = False
-                        self.store_setting()
                         self.switch_scene(Scene.REFRESH)
                     elif event.key == gloc.K_a:
                         self.ai = not self.ai
@@ -510,7 +505,6 @@ class Game(object):
                             self.switch_sound()
                         elif self.reset_button and self.rects[
                                 "reset"].collidepoint(pos):
-                            self.store_setting()
                             self.switch_scene(Scene.REFRESH)
                         elif self.space_button and self.rects[
                                 "space"].collidepoint(pos):
@@ -545,7 +539,7 @@ class Game(object):
                         self.down_button = False
 
             # 基础背景绘制
-            self.screen.blit(self.background, (0, 0))
+            self.screen.blit(self.images["backgrounds"][self.level - 1], (0, 0))
             self.screen.fill((158, 173, 134), (126, 90, 360, 445))
             pygame.draw.rect(self.screen, (0, 0, 0), (140, 104, 210, 410), 2)
             self.matrix.update()
@@ -733,20 +727,12 @@ class Game(object):
                                 self.matrix.unfilled_rect, (i * 20, j * 20))
                 self.screen.blit(next_, (380, 365))
 
-                if self.score > 2500 and self.level < 6:
-                    self.level = 6
-                    self.level_upgrading = True
-                elif self.score > 2000 and self.level < 2:
-                    self.level = 5
-                    self.level_upgrading = True
-                elif self.score > 1500 and self.level < 2:
-                    self.level = 4
-                    self.level_upgrading = True
-                elif self.score > 1000 and self.level < 2:
-                    self.level = 3
-                    self.level_upgrading = True
-                elif self.score > 500 and self.level < 2:
-                    self.level = 2
+                if (self.score > 2500 and self.level < 6) or (
+                        self.score > 2000 and self.level < 5) or (
+                            self.score > 1500 and self.level < 4) or (
+                                self.score > 1000 and
+                                self.level < 3) or (self.score > 500 and
+                                                    self.level < 2):
                     self.level_upgrading = True
 
                 # 控制
@@ -805,7 +791,8 @@ class Game(object):
                             else:
                                 logging.info("Next")
                                 self.matrix.next_tetris()
-                    self.drop_delay = (self.drop_delay + 1) % 20
+                    self.drop_delay = (self.drop_delay +
+                                       1) % self.speeds[self.level]
 
                     # 左右移动
                     if self.left_button:
@@ -902,7 +889,7 @@ class Game(object):
                     self.level_upgrading = False
                 elif self.level_upgrade_delay == 8:
                     # 更换背景
-                    self.background = self.images["backgrounds"][self.level - 1]
+                    self.level += 1
 
             # 记录当前帧数
             self.delay = (self.delay + 1) % 30

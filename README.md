@@ -2,7 +2,7 @@
  * @Author         : yanyongyu
  * @Date           : 2020-05-14 22:26:04
  * @LastEditors    : yanyongyu
- * @LastEditTime   : 2020-06-04 15:35:15
+ * @LastEditTime   : 2020-06-06 19:13:19
  * @Description    : None
  * @GitHub         : https://github.com/yanyongyu
 -->
@@ -21,6 +21,7 @@
   - [Overview](#overview)
   - [Screenshots](#screenshots)
   - [Play the Game](#play-the-game)
+    - [Install](#install)
     - [Start](#start)
     - [How to Play](#how-to-play)
   - [Pierre Dellacherie](#pierre-dellacherie)
@@ -32,6 +33,7 @@
     - [Board Wells](#board-wells)
     - [Total](#total)
     - [Priority](#priority)
+    - [Result Preview](#result-preview)
   - [Project Development Setup](#project-development-setup)
 
 ## Overview
@@ -45,10 +47,21 @@ AI algorithm: Pierre Dellacherie ([El-Tetris](https://imake.ninja/el-tetris-an-i
 ## Screenshots
 
 <img src="./static/overview1.png" alt="Overview" width="40%">
+<img src="./static/overview2.png" alt="Overview" width="40%">  
+<img src="./static/overview3.png" alt="Overview" width="40%">
+<img src="./static/overview4.png" alt="Overview" width="40%">
 
 ## Play the Game
 
+### Install
+
+```shell
+pip3 install pytetris
+```
+
 ### Start
+
+Run the following command in the environment which you installed the pytetris package or under the project folder:
 
 ```shell
 python -m pytetris
@@ -187,6 +200,11 @@ The evaluation function is a linear sum of all the above features. Bigger value 
 priority = 100 \* moving_steps + rotation_times
 
 We choose the action which priority is lower if there are two or more same evaluation actions.
+
+### Result Preview
+
+<img src="./static/ai.gif" width="40%">
+<img src="./static/ai.png" width="40%">
 
 ## Project Development Setup
 
